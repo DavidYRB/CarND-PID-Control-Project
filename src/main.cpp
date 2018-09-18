@@ -33,18 +33,24 @@ int main()
   uWS::Hub h;
 
   PID pid;
+  PID speed_pid;
   // TODO: Initialize the pid variable.
-  double kp = 0.15;
-  double ki = 0.0001;
-  double kd = 2;
-  pid.Init(kp, ki, kd, true);
-  h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  // when using following paramters, it is the start point for twiddle, set tuning to be true
+  // double kp = 0.2;
+  // double ki = 0.002;
+  // double kd = 2;
+
+  // the following paramters are tuned paramters, set tune parameters to be false
+  double kp = 0.211288;
+  double ki = 0.0022;
+  double kd = 2.90795;
+  pid.Init(kp, ki, kd, false);
+  speed_pid.Init(0.12, 0, 0, false);
+  h.onMessage([&pid, &speed_pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
-    PID speed_pid;
-    speed_pid.Init(0.1, 0, 0, false);
-    int cmdCounter = 0;
+    
     if (length && length > 2 && data[0] == '4' && data[1] == '2')
     {
       auto s = hasData(std::string(data).substr(0, length));
@@ -85,7 +91,6 @@ int main()
 
           // DEBUG
           std::cout << "CTE: " << cte << " Steering Value: " << steer_value  << " angle: " << angle << std::endl;
-          std::cout << "counter: " << cmdCounter++ << std::endl;
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;

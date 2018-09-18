@@ -1,5 +1,6 @@
 #include "PID.h"
 #include <iostream>
+#include <cmath>
 using namespace std;
 
 /*
@@ -29,13 +30,14 @@ void PID::Init(double Kp, double Ki, double Kd, bool isTwiddle) {
   dp.push_back(0.1 * Kd);
 
   parameter_index = 0;
-  step_per_loop = 100;
+  step_per_loop = 50;
   current_loop = 0;
   current_step = 1;
 
   RUN_STATE = true;
   TUNE_UP = true;
   curr_err = 0;
+  total_step_per_lap = 0;
 }
 
 void PID::UpdateError(double cte) {
@@ -47,25 +49,31 @@ void PID::UpdateError(double cte) {
 
   if(isTwiddle && dp_sum > 0.001){
     std::cout << "I am I tuning? " << std::endl;
+    std::cout << "Run state: " << RUN_STATE << " Tune state: " << TUNE_UP << std::endl;
     if(RUN_STATE){
       if(current_step < step_per_loop * 2){
-        if(curr_err > step_per_loop){
-          curr_err += cte;
+        if(current_step > step_per_loop){
+          curr_err += pow(cte, 2);
         }
         current_step++;
+        std::cout << "Curr error: " << curr_err << " cte: " << cte << " index: " << parameter_index << std::endl;
         return;
       }
+      total_step_per_lap += step_per_loop * 2;
+      std::cout << "total step: " << total_step_per_lap << std::endl;
       RUN_STATE = false;
       current_step = 0;
+      curr_err /= step_per_loop;
       current_loop++;
     }
     // When the first loop, just record the error as best error, and change 
     // one parameter to run again.
-    std::cout << "Current Loop: " << current_loop;
+    std::cout << "Current Loop: " << current_loop << std::endl;
     if(current_loop == 1){
       best_err = curr_err;
       temp_p[parameter_index] += dp[parameter_index];
       RUN_STATE = true;
+      curr_err = 0;
       return;
     }
     else{
@@ -88,6 +96,7 @@ void PID::UpdateError(double cte) {
           TUNE_UP = false;
         }
         RUN_STATE = true;
+        curr_err = 0;
         return;
       }
       
@@ -109,6 +118,7 @@ void PID::UpdateError(double cte) {
         }
         TUNE_UP = true;
         RUN_STATE = true;
+        curr_err = 0;
         return;
       }
     }

@@ -32,6 +32,7 @@ public:
   bool RUN_STATE;
   bool TUNE_UP;
   double curr_err;
+  double total_step_per_lap;
 
 
   /*

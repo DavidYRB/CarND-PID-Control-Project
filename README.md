@@ -1,6 +1,49 @@
 # CarND-Controls-PID
 Self-Driving Car Engineer Nanodegree Program
 
+## Discussion
+
+### Review of PID controller
+
+In this project, we create a PID controller to control the steering angle of the car in the simulator. The mean idea of the controller is to use the Cross Track Error (CTE) to generate a value that will decrease/eliminate the CTE so that the actual steering angle will be the desired steering angle.
+
+PID controller is a simple controller that just use three parameters to generate control command.
+
+* P parameter
+  
+  P parameter means proportional, it will generate the command proportional to CTE, for example, if we use `c` to represent CTE, and `Kp` represent P parameter, the controller out put will be:
+  $$Kp * c$$. 
+  This parameter makes the controller sensitive to the error, if CTE is large, the controller output is large, and vice versa.
+
+* I parameter
+  
+  I parameter means integral. It means it has the ability to remember all the error in the past. Actually, it will accumulate CTE of every time step in the past. If we use `c` to represent CTE, and `Ki` represent I parameter, the output of I controller is:
+  $$ Ki * \sum{c}$$
+  It means the controller will take accumulative error into account, as time goes by, if the sum of CTE be come smaller, the control output will be not that fast. It can be useful for systems that has internal bias. For example, the car itself cannot go straight eventhough we fix the wheel.
+
+* D parameter
+  
+  D parameter means differential. It takes the change rate into account, which means it regulate how fast CTE changes. When CTE in this time step changes a lot in next time step, the output of D controller is great. So D controller can be used to reduce oscillation. D controller is always used with P controller to reduce overshoot and make the change smoothly.
+  $$ Kd * (c_t - c_{t-1})$$
+
+* PID controller in math
+  
+  Based on the description above, the controller can be represented as
+  $$ Kp * c + Ki * \sum{c} + Kd * (c_t - c_{t-1}) $$
+
+### Tuning PID paramters
+
+* Start points
+
+  From class we learned a way to tune PID paramters called Twiddle, but we always need to have a start for tuning so that we can quickly approach to the converge point. To find the start point, I first used only P parameter to find a value that can keep the car in the track eventhough there was some oscillation. Then find D value that can reduce the oscillation a little. For I parameter, since it will take all past CTE into account, it should not be too large. I just set a value a little greater than zero. After I determined the parameter that can make the car run in the track, we start to use twiddle.
+  The beginning parameter of PID is 
+  $$Kp = 0.2 \text{   } Ki = 0.002\text{ }Kd = 2$$
+
+* Twiddle to converge
+  
+  To make the parameter more precise, I update parameter in order every 100 time steps. The first 50 steps will just make it run, and record CTE of next 50 steps. Then send the average CTE for each step to twiddle algoritm. The final paramter is: 
+  $$Kp = 0.211288 \text{   } Ki = 0.0022\text{ }Kd = 2.90795$$
+
 ---
 
 ## Dependencies
